@@ -552,9 +552,11 @@ Status SortedCollectionRebuilder::rebuildSkiplistIndex(Skiplist* skiplist) {
         }
 
         if (s != Status::Ok) {
+          delete (dram_node);
           return s;
         }
       }
+      delete (dram_node);
 
       valid_version_record->PersistOldVersion(kNullPMemOffset);
       splice.prev_pmem_record = valid_version_record;
@@ -567,7 +569,7 @@ Status SortedCollectionRebuilder::rebuildSkiplistIndex(Skiplist* skiplist) {
 Status SortedCollectionRebuilder::listBasedIndexRebuild() {
   std::vector<std::future<Status>> fs;
   size_t i = 0;
-  for (auto skiplist : rebuild_skiplits_) {
+  for (auto& skiplist : rebuild_skiplits_) {
     i++;
     fs.push_back(std::async(&SortedCollectionRebuilder::rebuildSkiplistIndex,
                             this, skiplist.second.get()));
@@ -623,7 +625,7 @@ Status SortedCollectionRebuilder::insertHashIndex(const StringView& key,
                                                   PointerType index_type) {
   // TODO: ttl
   RecordType record_type = RecordType::Empty;
-  RecordStatus record_status;
+  RecordStatus record_status = {};
   if (index_type == PointerType::DLRecord) {
     record_type = RecordType::SortedElem;
     record_status = static_cast<DLRecord*>(index_ptr)->GetRecordStatus();
@@ -682,7 +684,8 @@ DLRecord* SortedCollectionRebuilder::findCheckpointVersion(
   }
   CollectionIDType id = Skiplist::FetchID(pmem_record);
   DLRecord* curr = pmem_record;
-  while (curr != nullptr && curr->GetTimestamp() > checkpoint_.CheckpointTS()) {
+  while (curr != nullptr) {
+    if (curr->GetTimestamp() <= checkpoint_.CheckpointTS()) break;
     curr =
         kv_engine_->pmem_allocator_->offset2addr<DLRecord>(curr->old_version);
 

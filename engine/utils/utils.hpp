@@ -38,7 +38,12 @@ template <typename F>
 struct Defer {
   F f;
   Defer(F f) : f(f) {}
-  ~Defer() { f(); }
+  ~Defer() {
+    try {
+      f();
+    } catch (std::exception& err) {
+    }
+  }
 };
 template <typename F>
 Defer<F> defer_func(F f) {

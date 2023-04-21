@@ -356,11 +356,10 @@ class KVEngine : public Engine {
                   "Invalid type!");
     return std::is_same<CollectionType, Skiplist>::value
                ? RecordType::SortedRecord
-               : std::is_same<CollectionType, List>::value
-                     ? RecordType::ListRecord
-                     : std::is_same<CollectionType, HashList>::value
-                           ? RecordType::HashRecord
-                           : RecordType::Empty;
+           : std::is_same<CollectionType, List>::value ? RecordType::ListRecord
+           : std::is_same<CollectionType, HashList>::value
+               ? RecordType::HashRecord
+               : RecordType::Empty;
   }
 
   static PointerType pointerType(RecordType rtype) {
@@ -659,6 +658,7 @@ class KVEngine : public Engine {
   struct BackgroundWorkSignals {
     BackgroundWorkSignals() = default;
     BackgroundWorkSignals(const BackgroundWorkSignals&) = delete;
+    BackgroundWorkSignals& operator=(const BackgroundWorkSignals& rhs) = delete;
 
     std::condition_variable_any pmem_usage_reporter_cv;
     std::condition_variable_any pmem_allocator_organizer_cv;
